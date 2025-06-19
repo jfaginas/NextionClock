@@ -48,11 +48,16 @@ void SystemManager::update() {
             scheduler.update(nowTime, true);  // Flag habilitación fija por ahora
         }
     }
-
     if (nextion.isCommandAvailable()) {
         String cmd = nextion.getLastCommand();
+        Serial.print("[System] Comando recibido: ");
+        Serial.println(cmd);
         handleCommand(cmd);
     }
+    // if (nextion.isCommandAvailable()) {
+    //     String cmd = nextion.getLastCommand();
+    //     handleCommand(cmd);
+    // }
 }
 
 void SystemManager::handleCommand(const String& cmd) {

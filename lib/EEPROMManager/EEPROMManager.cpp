@@ -11,6 +11,8 @@ void EEPROMManager::begin() {
 bool EEPROMManager::writeBytes(uint16_t memAddress, const uint8_t* data, size_t length) {
     const size_t PAGE_SIZE = 32;
     size_t bytesWritten = 0;
+    
+    Serial.printf("[EEPROM] Intentando escribir %u bytes en dirección 0x%04X\n", length, memAddress);
 
     while (bytesWritten < length) {
         size_t chunkSize = min(PAGE_SIZE - (memAddress % PAGE_SIZE), length - bytesWritten);

@@ -19,8 +19,8 @@ void SchedulerManager::update(const DateTime& now, bool enableFlag) {
 void SchedulerManager::applySchedule(const DateTime& now, bool enableFlag) {
     ledState = false;
     if (!enableFlag) return;
-
-    uint8_t index = now.weekday == 0 ? 6 : now.weekday - 1;  // 0=Lun, ..., 6=Dom
+    // Convertir weekday del RTC (1=Dom...7=Sab) a índice interno (0=Lun...6=Dom)
+    uint8_t index = (now.weekday + 5) % 7;  // 0=Lun, ..., 6=Dom
     const DailySchedule& day = schedule.days[index];
     TimePoint current = { now.hour, now.minute };
 
@@ -42,8 +42,12 @@ bool SchedulerManager::isWithinInterval(const TimePoint& now, const TimePoint& o
 }
 
 void SchedulerManager::setSchedule(uint8_t day, uint8_t slot, const TimePoint& on, const TimePoint& off, bool enabled) {
+    Serial.printf("[DEBUG] setSchedule() → día=%u, slot=%u, ON=%02u:%02u, OFF=%02u:%02u, enab=%d\n",
+    day, slot, on.hour, on.minute, off.hour, off.minute, enabled);
+
     if (day > 6 || slot > 1) return;
     schedule.days[day].slots[slot] = { on, off, (uint8_t)enabled };
+    Serial.println("[DEBUG] Llamando a saveToEEPROM()");
     saveToEEPROM();
 }
 
@@ -70,6 +74,7 @@ void SchedulerManager::loadFromEEPROM() {
 }
 
 void SchedulerManager::saveToEEPROM() {
+    Serial.println("[DEBUG] Entrando en saveToEEPROM()");
     EEPROMManager eeprom(EEPROM_ADDRESS);
     eeprom.begin();
     eeprom.writeBytes(EEPROM_SCHEDULE_ADDR, (uint8_t*)&schedule, EEPROM_SCHEDULE_SIZE);
@@ -83,6 +88,8 @@ void SchedulerManager::handleSchedulerCommand(const String& cmd) {
     cmd.toCharArray(buffer, sizeof(buffer));
     char* token = strtok(buffer, ",");
 
+    Serial.println("[DEBUG] Entrando en handleSchedulerCommand()");
+    
     while (token && count < 7) {
         values[count++] = atoi(token);
         token = strtok(nullptr, ",");
@@ -96,6 +103,8 @@ void SchedulerManager::handleSchedulerCommand(const String& cmd) {
         bool enabled = values[6];
 
         setSchedule(day, slot, on, off, enabled);
+
+        Serial.println("[DEBUG] Llamado a setSchedule(), debería grabar en EEPROM");
 
         Serial.printf("[Scheduler] Guardado: día %u slot %u %02u:%02u → %02u:%02u (%s)\n",
             day, slot, on.hour, on.minute, off.hour, off.minute,
