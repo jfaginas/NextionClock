@@ -17,54 +17,34 @@ void NextionManager::parseSerial() {
     while (_serial.available()) {
         char c = _serial.read();
 
+        // Ignorar caracteres de control no imprimibles (excepto salto de línea si lo usás)
+        if ((uint8_t)c < 32 && c != '\r' && c != '\n') {
+            continue;  // ← descarta caracteres como 0x1A (SUB)
+        }
+
         if ((uint8_t)c == 0xFF) {
             ff_count++;
             if (ff_count == 3) {
-                _lastCommand = _buffer;
-                _buffer = "";
-                _commandReady = true;
                 ff_count = 0;
+                if (_buffer.length() > 0) {
+                    _lastCommand = _buffer;
+                    _buffer = "";
+                    _commandReady = true;
+                }
             }
         } else {
             _buffer += c;
             ff_count = 0;
+
+            // Seguridad: evitar que el buffer crezca indefinidamente si llega ruido
+            if (_buffer.length() > 40) {
+                Serial.println("[Nextion] Buffer saturado. Descartando.");
+                _buffer = "";
+                ff_count = 0;
+            }
         }
     }
 }
-// void NextionManager::parseSerial() {
-//     static uint8_t ff_count = 0;
-
-//     while (_serial.available()) {
-//         char c = _serial.read();
-
-//         // Ignorar caracteres de control no imprimibles (excepto salto de línea si lo usás)
-//         if ((uint8_t)c < 32 && c != '\r' && c != '\n') {
-//             continue;  // ← descarta caracteres como 0x1A (SUB)
-//         }
-
-//         if ((uint8_t)c == 0xFF) {
-//             ff_count++;
-//             if (ff_count == 3) {
-//                 ff_count = 0;
-//                 if (_buffer.length() > 0) {
-//                     _lastCommand = _buffer;
-//                     _buffer = "";
-//                     _commandReady = true;
-//                 }
-//             }
-//         } else {
-//             _buffer += c;
-//             ff_count = 0;
-
-//             // Seguridad: evitar que el buffer crezca indefinidamente si llega ruido
-//             if (_buffer.length() > 40) {
-//                 Serial.println("[Nextion] Buffer saturado. Descartando.");
-//                 _buffer = "";
-//                 ff_count = 0;
-//             }
-//         }
-//     }
-// }
 
 bool NextionManager::isCommandAvailable() const {
     return _commandReady;
@@ -97,19 +77,13 @@ void NextionManager::sendCommand(const String& cmd) {
     _serial.write(0xFF); _serial.write(0xFF); _serial.write(0xFF);
 }
 
-// const char* NextionManager::weekdayToString(uint8_t weekday) {
-//     static const char* days[] = {
-//         "Domingo", "Lunes", "Martes", "Miercoles",
-//         "Jueves", "Viernes", "Sabado"
-//     };
-//     return days[(weekday - 1) % 7];
-// }
 const char* NextionManager::weekdayToString(uint8_t weekday) {
     static const char* days[] = {
-        "Domingo", "Lunes", "Martes", "Miércoles",
-        "Jueves", "Viernes", "Sábado"
+        "Lunes", "Martes", "Miércoles", "Jueves",
+        "Viernes", "Sábado", "Domingo"
     };
+
     if (weekday >= 1 && weekday <= 7)
-        return days[weekday - 1];
+        return days[(weekday + 5) % 7];  // misma conversión
     return "???";
 }
