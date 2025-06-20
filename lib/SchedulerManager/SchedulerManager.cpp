@@ -16,28 +16,82 @@ void SchedulerManager::update(const DateTime& now, bool enableFlag) {
     digitalWrite(SCHEDULER_LED_PIN, ledState ? HIGH : LOW);
 }
 
+// void SchedulerManager::applySchedule(const DateTime& now, bool enableFlag) {
+//     ledState = false;
+//     if (!enableFlag) return;
+//     // Convertir weekday del RTC (1=Dom...7=Sab) a índice interno (0=Lun...6=Dom)
+//     uint8_t index = (now.weekday + 5) % 7;  // 0=Lun, ..., 6=Dom
+//     const DailySchedule& day = schedule.days[index];
+//     TimePoint current = { now.hour, now.minute };
+
+//     for (const auto& slot : day.slots) {
+//         if (!slot.enabled) continue;
+//         if (isWithinInterval(current, slot.onTime, slot.offTime)) {
+//             Serial.printf("[Scheduler] Intervalo activo: %02u:%02u → %02u:%02u\n",
+//                           slot.onTime.hour, slot.onTime.minute,
+//                           slot.offTime.hour, slot.offTime.minute);
+//             ledState = true;
+//             break;
+//         }
+//     }
+// }
 void SchedulerManager::applySchedule(const DateTime& now, bool enableFlag) {
     ledState = false;
     if (!enableFlag) return;
-    // Convertir weekday del RTC (1=Dom...7=Sab) a índice interno (0=Lun...6=Dom)
-    uint8_t index = (now.weekday + 5) % 7;  // 0=Lun, ..., 6=Dom
-    const DailySchedule& day = schedule.days[index];
+
     TimePoint current = { now.hour, now.minute };
 
-    for (const auto& slot : day.slots) {
+    // Día actual
+    uint8_t indexToday = (now.weekday + 5) % 7;
+    const DailySchedule& today = schedule.days[indexToday];
+
+    // Día anterior
+    uint8_t indexYesterday = (indexToday + 6) % 7;  // día anterior
+    const DailySchedule& yesterday = schedule.days[indexYesterday];
+
+    // Ver slots del día actual
+    for (const auto& slot : today.slots) {
         if (!slot.enabled) continue;
         if (isWithinInterval(current, slot.onTime, slot.offTime)) {
+            Serial.printf("[Scheduler] ACTUAL: %02u:%02u → %02u:%02u\n",
+                          slot.onTime.hour, slot.onTime.minute,
+                          slot.offTime.hour, slot.offTime.minute);
             ledState = true;
-            break;
+            return;
+        }
+    }
+
+    // Ver slots del día anterior que cruzan medianoche
+    for (const auto& slot : yesterday.slots) {
+        if (!slot.enabled) continue;
+        uint16_t onMin  = slot.onTime.hour * 60 + slot.onTime.minute;
+        uint16_t offMin = slot.offTime.hour * 60 + slot.offTime.minute;
+        if (onMin > offMin) {  // cruza medianoche
+            if (isWithinInterval(current, slot.onTime, slot.offTime)) {
+                Serial.printf("[Scheduler] AYER (overnight): %02u:%02u → %02u:%02u\n",
+                              slot.onTime.hour, slot.onTime.minute,
+                              slot.offTime.hour, slot.offTime.minute);
+                ledState = true;
+                return;
+            }
         }
     }
 }
 
-bool SchedulerManager::isWithinInterval(const TimePoint& now, const TimePoint& on, const TimePoint& off) {
-    if (on < off) {
-        return (on <= now && now < off);
-    } else {  // Intervalo cruzando medianoche
-        return (now >= on || now < off);
+bool SchedulerManager::isWithinInterval(const TimePoint& now, const TimePoint& start, const TimePoint& end) {
+    uint16_t nowMin   = now.hour * 60 + now.minute;
+    uint16_t startMin = start.hour * 60 + start.minute;
+    uint16_t endMin   = end.hour * 60 + end.minute;
+
+    if (startMin < endMin) {
+        // Caso normal: dentro del mismo día
+        return nowMin >= startMin && nowMin < endMin;
+    } else if (startMin > endMin) {
+        // Caso overnight: el intervalo cruza medianoche
+        return nowMin >= startMin || nowMin < endMin;
+    } else {
+        // Caso especial: start == end → sin duración
+        return false;
     }
 }
 
