@@ -17,6 +17,7 @@ public:
     bool isCommandAvailable() const;
     String getLastCommand();
     const char* weekdayToString(uint8_t weekday);
+    void sendCommand(const String& cmd);
 
 private:
     HardwareSerial& _serial;
@@ -25,7 +26,7 @@ private:
     bool _commandReady;
 
     void parseSerial();
-    void sendCommand(const String& cmd);
+
     // const char* weekdayToString(uint8_t weekday);
 };
 

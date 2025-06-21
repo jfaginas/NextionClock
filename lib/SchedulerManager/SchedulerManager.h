@@ -4,6 +4,7 @@
 #include <Wire.h>
 #include <EEPROMManager.h>
 #include <DateTimeUtils.h>
+#include <NextionManager.h>
 
 #define SCHEDULER_LED_PIN 2
 #define EEPROM_ADDRESS 0x57
@@ -50,6 +51,9 @@ public:
     const WeeklySchedule& getSchedule() const;
 
     void handleSchedulerCommand(const String& cmd);  // Nuevo
+    void clearSchedule();
+    //void showScheduleForDay(uint8_t day);
+    void showScheduleForDay(uint8_t day, NextionManager& display);
 
 private:
     WeeklySchedule schedule;

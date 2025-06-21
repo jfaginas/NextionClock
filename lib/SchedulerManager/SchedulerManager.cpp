@@ -16,25 +16,7 @@ void SchedulerManager::update(const DateTime& now, bool enableFlag) {
     digitalWrite(SCHEDULER_LED_PIN, ledState ? HIGH : LOW);
 }
 
-// void SchedulerManager::applySchedule(const DateTime& now, bool enableFlag) {
-//     ledState = false;
-//     if (!enableFlag) return;
-//     // Convertir weekday del RTC (1=Dom...7=Sab) a índice interno (0=Lun...6=Dom)
-//     uint8_t index = (now.weekday + 5) % 7;  // 0=Lun, ..., 6=Dom
-//     const DailySchedule& day = schedule.days[index];
-//     TimePoint current = { now.hour, now.minute };
 
-//     for (const auto& slot : day.slots) {
-//         if (!slot.enabled) continue;
-//         if (isWithinInterval(current, slot.onTime, slot.offTime)) {
-//             Serial.printf("[Scheduler] Intervalo activo: %02u:%02u → %02u:%02u\n",
-//                           slot.onTime.hour, slot.onTime.minute,
-//                           slot.offTime.hour, slot.offTime.minute);
-//             ledState = true;
-//             break;
-//         }
-//     }
-// }
 void SchedulerManager::applySchedule(const DateTime& now, bool enableFlag) {
     ledState = false;
     if (!enableFlag) return;
@@ -165,5 +147,38 @@ void SchedulerManager::handleSchedulerCommand(const String& cmd) {
             enabled ? "ON" : "OFF");
     } else {
         Serial.println("[Scheduler] Error de formato en comando SCHED=");
+    }
+}
+
+void SchedulerManager::clearSchedule() {
+    for (auto& day : schedule.days) {
+        for (auto& slot : day.slots) {
+            slot.onTime = {0, 0};
+            slot.offTime = {0, 0};
+            slot.enabled = false;
+        }
+    }
+    saveToEEPROM();
+    Serial.println("[Scheduler] Programación borrada.");
+}
+
+void SchedulerManager::showScheduleForDay(uint8_t day, NextionManager& display) {
+
+    if (day > 6) return;
+
+    for (int s = 0; s < 2; ++s) {
+        const ScheduleSlot& slot = schedule.days[day].slots[s];
+
+        char buf[32];
+        if (slot.enabled) {
+            snprintf(buf, sizeof(buf), "%02u:%02u - %02u:%02u", 
+                     slot.onTime.hour, slot.onTime.minute,
+                     slot.offTime.hour, slot.offTime.minute);
+        } else {
+            snprintf(buf, sizeof(buf), "Vacio");
+        }
+
+        String cmd = "slot" + String(s) + ".txt=\"" + String(buf) + "\"";
+        display.sendCommand(cmd);  // envía comando al Nextion
     }
 }

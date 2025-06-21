@@ -79,8 +79,8 @@ void NextionManager::sendCommand(const String& cmd) {
 
 const char* NextionManager::weekdayToString(uint8_t weekday) {
     static const char* days[] = {
-        "Lunes", "Martes", "Miércoles", "Jueves",
-        "Viernes", "Sábado", "Domingo"
+        "Lunes", "Martes", "Miercoles", "Jueves",
+        "Viernes", "Sabado", "Domingo"
     };
 
     if (weekday >= 1 && weekday <= 7)

@@ -13,6 +13,7 @@ public:
     SystemManager();
     void begin();
     void update();
+    
 
 private:
     DS3231Manager rtc;
