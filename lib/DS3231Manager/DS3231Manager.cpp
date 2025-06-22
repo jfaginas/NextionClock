@@ -56,4 +56,3 @@ uint8_t DS3231Manager::decToBcd(uint8_t val) {
 uint8_t DS3231Manager::bcdToDec(uint8_t val) {
     return (val / 16 * 10) + (val % 16);
 }
-

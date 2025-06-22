@@ -6,15 +6,12 @@
 #include <NextionManager.h>
 #include <DateTimeUtils.h>
 
-
-
 class SystemManager {
 public:
     SystemManager();
     void begin();
     void update();
-    
-
+ 
 private:
     DS3231Manager rtc;
     SchedulerManager scheduler;
@@ -27,4 +24,3 @@ private:
     void handleSetDate(const String& data);
     void handleSetTime(const String& data);
 };
-

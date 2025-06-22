@@ -23,7 +23,6 @@ void SystemManager::begin() {
             nextion.gotoPage("page_SetDate");
         }
     }
-
     Serial.println("SystemManager iniciado.");
 }
 
@@ -54,27 +53,7 @@ void SystemManager::update() {
         Serial.println(cmd);
         handleCommand(cmd);
     }
-    // if (nextion.isCommandAvailable()) {
-    //     String cmd = nextion.getLastCommand();
-    //     handleCommand(cmd);
-    // }
 }
-
-// void SystemManager::handleCommand(const String& cmd) {
-//     if (cmd.startsWith("SETDATE=")) {
-//         handleSetDate(cmd.substring(8));
-//     } else if (cmd.startsWith("SETTIME=")) {
-//         handleSetTime(cmd.substring(8));
-//     } else if (cmd.startsWith("SCHED=")) {
-//         scheduler.handleSchedulerCommand(cmd.substring(6));
-
-//         Serial.print("[System] Comando de programación recibido: "); //
-//         Serial.println(cmd.substring(6));                            //
-
-//     } else {
-//         Serial.println("[Nextion] Comando desconocido: " + cmd);
-//     }
-// }
 
 void SystemManager::handleCommand(const String& cmd) {
     if (cmd.startsWith("SETDATE=")) {
@@ -142,6 +121,3 @@ void SystemManager::handleSetTime(const String& data) {
         nextion.showError("Hora inválida");
     }
 }
-
-
-

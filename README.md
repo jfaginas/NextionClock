@@ -1,126 +1,192 @@
-🎯 Objetivo principal del sistema
+# Nextion Clock – ESP32 + DS3231 + EEPROM + Nextion
 
-Permitir al usuario configurar fecha y hora en un módulo RTC DS3231, visualizar esa información en un display Nextion, y controlar un LED conectado al ESP32 en base a una programación semanal de horarios ON/OFF. Todo el sistema guarda su configuración de forma persistente en una memoria EEPROM externa (24C32) conectada por I2C.
-🧩 Componentes físicos utilizados
-Componente	Función	Detalles
-ESP32	Microcontrolador principal	UART2 con Nextion, I2C con RTC y EEPROM
-DS3231	Reloj de tiempo real (RTC)	Dirección I2C: 0x68
-EEPROM 24C32	Almacenamiento persistente	Dirección I2C: 0x57, 16 bits, 4KBytes
-Display Nextion	Interfaz táctil para el usuario	Conectado a Serial2
-LED GPIO2	Salida controlada por programación	Encendido según horario y flag
-⚙️ Flujo general del sistema
-🔌 Al iniciar el sistema (setup)
+Firmware modular y robusto para un sistema de programación horaria semanal con visualización e interacción mediante una pantalla táctil Nextion.
 
-    Se inicializan:
+---
 
-        Bus I2C (Wire)
+## 📌 Descripción general
 
-        Puerto serial Serial2 para el Nextion
+El proyecto **Nextion Clock** permite controlar salidas (por ejemplo, relés o LEDs) según horarios semanales definidos por el usuario. El sistema:
 
-        RTC DS3231
+- Muestra la fecha y hora actual en una pantalla Nextion.
+- Permite modificar fecha y hora desde la interfaz táctil.
+- Soporta programación de encendidos/apagados diarios (hasta 2 ciclos por día).
+- Almacena los datos en una memoria EEPROM externa (24C32).
+- Mantiene la hora mediante un RTC DS3231, incluso sin energía.
+- Ejecuta los ciclos aún si se reinicia el ESP32.
+- Permite borrar toda la programación desde la interfaz.
+- Permite consultar los ciclos configurados por día.
 
-        EEPROM 24C32
+---
 
-        Horarios cargados desde la EEPROM (WeeklySchedule)
+## 🧱 Arquitectura
 
-    Se verifica si el RTC perdió la hora (bit OSF):
+- **Microcontrolador:** ESP32
+- **RTC:** DS3231
+- **EEPROM externa:** 24C32 (I2C)
+- **Pantalla táctil:** Nextion (modelo básico)
+- **IDE:** VS Code + PlatformIO
+- **Lenguaje:** C++ (orientado a objetos, modular)
 
-        ✔ Si perdió la hora → se muestra la pantalla page_configDate.
+---
 
-        ✔ Si el RTC tiene fecha válida → se muestra page_Init con fecha y hora actuales.
+## 📂 Estructura del proyecto
 
-🖥️ Pantalla principal (page_Init)
+```text
+NextionClock/
+├── src/
+│   └── main.cpp                      ← Programa principal (setup + loop)
+│
+├── lib/
+│   ├── SystemManager/
+│   │   ├── SystemManager.h
+│   │   └── SystemManager.cpp
+│   │
+│   ├── DS3231Manager/
+│   │   ├── DS3231Manager.h
+│   │   └── DS3231Manager.cpp
+│   │
+│   ├── EEPROMManager/
+│   │   ├── EEPROMManager.h
+│   │   └── EEPROMManager.cpp
+│   │
+│   ├── SchedulerManager/
+│   │   ├── SchedulerManager.h
+│   │   └── SchedulerManager.cpp
+│   │
+│   ├── NextionManager/
+│   │   ├── NextionManager.h
+│   │   └── NextionManager.cpp
+│   │
+│   └── DateTimeUtils/
+│       ├── DateTimeUtils.h
+│       └── DateTimeUtils.cpp
+│
+├── extras/
+│   ├── NextionClock.hmi              ← Archivo fuente editable con Nextion Editor
+│   └── NextionClock.tft              ← Archivo compilado para la pantalla Nextion
+│
+├── .pio/                             ← Carpeta generada por PlatformIO (build system)
+│   └── (no se incluye en el control de versiones)
+│
+├── .vscode/                          ← Configuración de VSCode (tasks, launch, etc.)
+│   └── (opcional)
+│
+├── .gitignore                        ← Archivos a excluir en Git
+├── platformio.ini                    ← Configuración de plataforma, velocidad, build flags, etc.
+└── README.md                         ← Documentación principal del proyecto
 
-    Se actualiza cada 1 segundo:
+```
+---
+## 📦 Módulos del sistema
 
-        t_date.txt: fecha (formato DD/MM/AAAA)
+El proyecto está diseñado con una arquitectura modular y orientada a objetos.  
+A continuación se describen brevemente los componentes principales:
 
-        t_hour.txt: hora (formato HH:MM)
+---
 
-        t_ddls.txt: día de la semana (ej. "Martes")
+### 🔧 `SystemManager`
 
-    El usuario puede acceder a un menú de configuración (botón bt_config, a implementar).
+Coordinador principal del sistema.  
+Inicializa todos los módulos y delega tareas entre ellos.  
+Se encarga de recibir, interpretar y redirigir los comandos provenientes del display Nextion.
 
-📅 Configuración manual de fecha y hora
+---
 
-    En page_configDate:
+### 🕒 `DS3231Manager`
 
-        El usuario elige día, mes, año.
+Encapsula el manejo del RTC DS3231.  
+Permite obtener y configurar la fecha y hora actual, incluyendo el día de la semana.  
+Internamente gestiona la conversión BCD y la comunicación I2C.
 
-        Al presionar bt_updateDate, se envía:
+---
 
-    SETDATE=dd,mm,aaaa
+### 💾 `EEPROMManager`
 
-    El firmware valida la fecha:
+Módulo que controla la memoria EEPROM externa 24C32.  
+Permite almacenar estructuras de datos (como la programación horaria) de forma persistente.  
+Abstrae la comunicación I2C y ofrece métodos de lectura y escritura tipo bloque.
 
-        Si válida → cambia a page_Time.
+---
 
-        Si inválida → muestra error en t_error.txt.
+### 📺 `NextionManager`
 
-En page_Time:
+Controlador de la pantalla táctil Nextion.  
+Se encarga de enviar comandos (por ejemplo, para actualizar campos de texto) y recibir eventos generados por el usuario.  
+Incluye manejo de buffers y conversión de valores como el día de la semana a texto.
 
-    El usuario elige hora y minutos.
+---
 
-    Al presionar bt_updateTime, se envía:
+### 📆 `SchedulerManager`
 
-        SETTIME=hh,mm
+Gestiona la programación horaria semanal del sistema.  
+Permite definir hasta dos rangos de encendido/apagado por día, para cada día de la semana.  
+Evalúa si el LED debe estar encendido en base a la hora actual y los slots programados.  
+Contempla intervalos que cruzan la medianoche y permite consultar o borrar la programación almacenada.
 
-        El firmware completa el objeto DateTime con los datos anteriores y actualiza el RTC.
+---
 
-🕹 Programación de encendido/apagado (función activa)
+### ⏱️ `DateTimeUtils`
 
-    Se programa mediante comandos del Nextion como:
+Contiene funciones auxiliares para trabajar con estructuras de fecha y hora (`TimePoint`, `DateTime`).  
+Incluye funciones para comparar horarios, convertir días de la semana y validar intervalos.
 
-SCHED=2,0,08,30,10,00,1
+---
 
-Interpreta como:
-Campo	Significado
-2	Día (2 = miércoles si 0=lunes)
-0	Slot (0 o 1)
-08,30	Hora de encendido
-10,00	Hora de apagado
-1	Habilitado
+> 💡 Todos los módulos están escritos con separación clara de responsabilidades y pueden reutilizarse o extenderse en futuros proyectos.
 
-    Se permiten 2 slots diarios por día.
 
-    Los datos se guardan automáticamente en la EEPROM (0x57) en formato binario (WeeklySchedule = 70 bytes).
+---
 
-    En cada segundo del loop, el sistema:
+## 🛠️ Funcionalidad disponible
 
-        Consulta la hora actual.
+| Función                  | Método de acceso           |
+|--------------------------|----------------------------|
+| Ver hora/fecha actual    | Pantalla Nextion           |
+| Setear hora y fecha      | Botón en pantalla          |
+| Programar horarios       | `SCHED=` desde Nextion     |
+| Consultar programación   | `SHOW=` desde Nextion      |
+| Borrar toda la memoria   | Botón `CLEAR` en pantalla  |
+| Encender/apagar salida   | Automático por programación |
 
-        Evalúa si el LED GPIO2 debe estar encendido según los slots habilitados y el flag de habilitación (por ahora true fijo).
+---
 
-💾 Persistencia de datos
-Datos persistidos	Dónde se guardan	Cuándo
-Horarios ON/OFF	EEPROM 24C32 (0x57)	Cada vez que se recibe SCHED=
-Fecha/Hora RTC	Interno al DS3231	Al finalizar SETTIME=...
-(Futuro) backup	EEPROM opcional	Podría agregarse si se desea
-⚠️ Protección contra pérdida de energía
+## 📡 Comunicación
 
-    Si el RTC pierde la hora (falta batería), se detecta al arranque mediante isPowerLost().
+- **ESP32 ↔ Nextion:** Serial (UART2)
+- **ESP32 ↔ RTC/EEPROM:** I2C
 
-    Se fuerza al usuario a ingresar una nueva fecha/hora para evitar funcionamiento incorrecto.
+---
 
-📦 Estructura modular del firmware
-Módulo	Función
-main.cpp	Cuerpo mínimo que instancia SystemManager
-SystemManager	Orquesta todo el sistema (setup, loop, interacción con display y RTC)
-NextionManager	Interfaz básica con el display Nextion (UART2)
-DS3231Manager	Manejo del RTC (lectura/escritura, detección de power loss)
-DateTimeUtils	Validación de fecha, string helpers
-SchedulerManager	Maneja los slots semanales, control del LED, guardado/lectura desde EEPROM
-EEPROMManager	Encapsula operaciones de lectura y escritura con 24C32 vía I2C
-🧠 Mejoras posibles a futuro (Etapas 4+)
+## 📋 Requisitos
 
-    ✅ Agregar checksum o firma para validar que la EEPROM contiene datos consistentes.
+- VS Code + PlatformIO
+- Fuente `NextionClock.hmi` abierta con Nextion Editor (Windows)
+- Carga del `NextionClock.tft` en pantalla mediante tarjeta microSD o USB-TTL
 
-    ✅ Guardar copia de respaldo de DateTime en EEPROM.
+---
+📦 Consideraciones
 
-    ✅ Permitir activar/desactivar todo el sistema mediante una entrada digital (flag).
+- El firmware fue diseñado para ser modular, claro y mantenible.
+- La lógica que evalúa los encendidos/apagados contempla intervalos que cruzan la medianoche.
+- Se implementaron logs en la terminal para facilitar el debug durante el desarrollo.
 
-    ✅ Implementar interfaz visual para gestionar SCHED= desde la pantalla táctil.
+---
+📌 Estado actual
 
-    ✅ Integrar librería Itead original de Nextion con NexButton, NexText, etc.
+    ✅ Firmware funcional
+    ✅ Persistencia de datos en EEPROM
+    ✅ Sincronización RTC
+    ✅ Interfaz Nextion operativa
+    🔜 Futuras mejoras: múltiples salidas.
+
+📖 Licencia
+
+Este proyecto está licenciado bajo la licencia MIT.
+
+👤 Autor
+
+Es un ejercicio educativo desarrollado por José Faginas, usando el siguiente toolchain: VsCode + PlatformIO en C++ y para la interfaz de usuario el Nextion Editor. 
+
 
 

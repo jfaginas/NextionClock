@@ -28,4 +28,3 @@ bool isLeapYear(uint16_t year);
 bool isValidDate(uint8_t d, uint8_t m, uint16_t y);
 
 uint8_t calculateWeekday(uint8_t d, uint8_t m, uint16_t y);
-

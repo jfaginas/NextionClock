@@ -29,4 +29,3 @@ private:
 
     // const char* weekdayToString(uint8_t weekday);
 };
-
