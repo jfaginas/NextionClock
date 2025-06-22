@@ -29,13 +29,37 @@ El proyecto **Nextion Clock** permite controlar salidas (por ejemplo, relés o L
 - **Lenguaje:** C++ (orientado a objetos, modular)
 
 ---
+## 🔌 Conexiones de hardware
 
+| Componente          | Pin ESP32       | Detalles                                 |
+|---------------------|------------------|-------------------------------------------|
+| **DS3231 (RTC)**    | GPIO21 (SDA)     | Bus I2C compartido                        |
+|                     | GPIO22 (SCL)     | Bus I2C compartido                        |
+| **EEPROM 24C32**    | GPIO21 (SDA)     | Misma línea I2C que el DS3231             |
+|                     | GPIO22 (SCL)     | Misma línea I2C que el DS3231             |
+|                     | VCC              | 3.3V o 5V según módulo                    |
+|                     | GND              | GND común                                |
+| **Nextion Display** | GPIO17 (TX2)     | TX del ESP32 → RX del Nextion             |
+|                     | GPIO16 (RX2)     | RX del ESP32 ← TX del Nextion             |
+|                     | VCC              | 5V (o 3.3V si el modelo lo soporta)       |
+|                     | GND              | GND común                                |
+| **LED controlado**  | GPIO2            | Salida digital controlada por horario     |
+---
+## 💡 Consideraciones
+
+- El bus I2C (RTC y EEPROM) puede tener resistencias de pull-up en el módulo o ser añadidas externamente (4.7k – 10k Ω típicas).
+
+- El display Nextion se comunica vía UART2 (Serial2). Asegurate de no usar esos pines para otras funciones.
+
+- GPIO2 es usado como salida de control (enciende el led interno al módulo ESP32). Puede conectarse a un LED con resistencia limitadora o a un módulo de relé.
+
+---
 ## 📂 Estructura del proyecto
 
 ```text
 NextionClock/
 ├── src/
-│   └── main.cpp                      ← Programa principal (setup + loop)
+│   └── main.cpp  ← Programa principal (setup + loop)
 │
 ├── lib/
 │   ├── SystemManager/
@@ -66,24 +90,17 @@ NextionClock/
 │   ├── NextionClock.hmi              ← Archivo fuente editable con Nextion Editor
 │   └── NextionClock.tft              ← Archivo compilado para la pantalla Nextion
 │
-├── .pio/                             ← Carpeta generada por PlatformIO (build system)
-│   └── (no se incluye en el control de versiones)
-│
-├── .vscode/                          ← Configuración de VSCode (tasks, launch, etc.)
-│   └── (opcional)
-│
-├── .gitignore                        ← Archivos a excluir en Git
-├── platformio.ini                    ← Configuración de plataforma, velocidad, build flags, etc.
+├── platformio.ini  ← Configuración de plataforma, velocidad, build flags, etc.
 └── README.md                         ← Documentación principal del proyecto
-
 ```
----
-## 📦 Módulos del sistema
+## 🧱 Diseño modular
 
-El proyecto está diseñado con una arquitectura modular y orientada a objetos.  
-A continuación se describen brevemente los componentes principales:
+Los módulos del sistema ubicados dentro de la carpeta `lib/` están desarrollados siguiendo el principio de responsabilidad única (*Single Responsibility Principle*).  
+Cada uno encapsula una funcionalidad específica (como gestión del RTC, comunicación con el display, acceso a la EEPROM, etc.), lo que permite un código más limpio, mantenible y reutilizable.
+
 
 ---
+## 📦 Descripción de cada módulo del sistema
 
 ### 🔧 `SystemManager`
 
@@ -133,7 +150,7 @@ Incluye funciones para comparar horarios, convertir días de la semana y validar
 
 ---
 
-> 💡 Todos los módulos están escritos con separación clara de responsabilidades y pueden reutilizarse o extenderse en futuros proyectos.
+> 💡 Insisto -> todos los módulos están escritos con separación clara de responsabilidades y pueden reutilizarse o extenderse en futuros proyectos.
 
 
 ---
