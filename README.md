@@ -87,11 +87,11 @@ NextionClock/
 │       └── DateTimeUtils.cpp
 │
 ├── extras/
-│   ├── NextionClock.hmi              ← Archivo fuente editable con Nextion Editor
-│   └── NextionClock.tft              ← Archivo compilado para la pantalla Nextion
+│   ├── NextionClock.hmi    ← Archivo fuente editable con Nextion Editor
+│   └── NextionClock.tft    ← Archivo compilado para la pantalla Nextion
 │
 ├── platformio.ini  ← Configuración de plataforma, velocidad, build flags, etc.
-└── README.md                         ← Documentación principal del proyecto
+└── README.md               ← Documentación principal del proyecto
 ```
 ## 🧱 Diseño modular
 
@@ -182,14 +182,14 @@ Incluye funciones para comparar horarios, convertir días de la semana y validar
 - Carga del `NextionClock.tft` en pantalla mediante tarjeta microSD o USB-TTL
 
 ---
-📦 Consideraciones
+## 📦 Consideraciones
 
 - El firmware fue diseñado para ser modular, claro y mantenible.
 - La lógica que evalúa los encendidos/apagados contempla intervalos que cruzan la medianoche.
 - Se implementaron logs en la terminal para facilitar el debug durante el desarrollo.
 
 ---
-📌 Estado actual
+## 📌 Estado actual
 
     ✅ Firmware funcional
     ✅ Persistencia de datos en EEPROM
@@ -197,13 +197,13 @@ Incluye funciones para comparar horarios, convertir días de la semana y validar
     ✅ Interfaz Nextion operativa
     🔜 Futuras mejoras: múltiples salidas.
 
-📖 Licencia
+## 📖 Licencia
 
 Este proyecto está licenciado bajo la licencia MIT.
 
-👤 Autor
+## 👤 Autor
 
-Es un ejercicio educativo desarrollado por José Faginas, usando el siguiente toolchain: VsCode + PlatformIO en C++ y para la interfaz de usuario el Nextion Editor. 
+Es un ejercicio educativo desarrollado por José Faginas, usando el siguiente toolchain: VsCode + PlatformIO en C++ y para la interfaz de usuario: el Nextion Editor. 
 
 
 
