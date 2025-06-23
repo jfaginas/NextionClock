@@ -18,18 +18,27 @@ El proyecto **Nextion Clock** permite controlar salidas (por ejemplo, relés o L
 - Permite consultar los ciclos configurados por día.
 
 ---
+## 🧩 Software utilizado
+- **ESP32 TOOLCHAIN:** VS Code (V. 1.101.1) + PlatformIO (Core 6.1.18 Home 3.4.4) + C++ (toolchain-xtensa-esp32 @ 8.4.0+2021r2-patch5)
+- **Nextion** Nextion Editor V1.67.1
 
-## 🧱 Arquitectura
+---
+## 🧱 Hardware - Arquitectura
 
 - **Microcontrolador:** ESP32
 - **RTC:** DS3231
 - **EEPROM externa:** 24C32 (I2C)
 - **Pantalla táctil:** Nextion (modelo básico -> NX3224T028_011)
-- **IDE:** VS Code + PlatformIO
-- **Lenguaje:** C++ (orientado a objetos, modular)
+---
+
+## 📡 Comunicación
+
+- **ESP32 ↔ Nextion:** -> `Serial (UART2)`
+- **ESP32 ↔ RTC (0x68) /EEPROM (0x57):** -> `I2C`
 
 ---
-## 🔌 Conexiones de hardware
+
+## 🔌 Conexiones
 
 | Componente          | Pin ESP32       | Detalles                                 |
 |---------------------|------------------|-------------------------------------------|
@@ -49,9 +58,9 @@ El proyecto **Nextion Clock** permite controlar salidas (por ejemplo, relés o L
 
 - El bus I2C (RTC y EEPROM) puede tener resistencias de pull-up en el módulo o ser añadidas externamente (4.7k – 10k Ω típicas).
 
-- El display Nextion se comunica vía UART2 (Serial2). Asegurate de no usar esos pines para otras funciones.
+- El display Nextion se comunica vía UART2 (Serial2). Asegurarse de no usar esos pines para otras funciones!!!
 
-- GPIO2 es usado como salida de control (enciende el led interno al módulo ESP32). Puede conectarse a un LED con resistencia limitadora o a un módulo de relé.
+- GPIO2 es usado como salida de control (enciende el led interno al módulo ESP32). OPCIONAL: Puede conectarse a un LED con resistencia limitadora o a un módulo de relé.
 
 ---
 ## 📂 Estructura del proyecto
@@ -168,18 +177,9 @@ Incluye funciones para comparar horarios, convertir días de la semana y validar
 
 ---
 
-## 📡 Comunicación
-
-- **ESP32 ↔ Nextion:** Serial (UART2)
-- **ESP32 ↔ RTC/EEPROM:** I2C
-
----
-
 ## 📋 Requisitos
 
-- VS Code + PlatformIO
-- Fuente `NextionClock.hmi` abierta con Nextion Editor (Windows)
-- Carga del `NextionClock.tft` en pantalla mediante tarjeta microSD o USB-TTL
+- Carga del `NextionClock.tft` en la pantalla Nextion mediante tarjeta microSD o USB-TTL
 
 ---
 ## 📦 Consideraciones
