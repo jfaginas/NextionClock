@@ -24,7 +24,7 @@ El proyecto **Nextion Clock** permite controlar salidas (por ejemplo, relés o L
 - **Microcontrolador:** ESP32
 - **RTC:** DS3231
 - **EEPROM externa:** 24C32 (I2C)
-- **Pantalla táctil:** Nextion (modelo básico)
+- **Pantalla táctil:** Nextion (modelo básico -> NX3224T028_011)
 - **IDE:** VS Code + PlatformIO
 - **Lenguaje:** C++ (orientado a objetos, modular)
 
