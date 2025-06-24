@@ -89,7 +89,7 @@ void SystemManager::handleSetDate(const String& data) {
             timeSetStepPending = true;
             nextion.gotoPage("page_SetTime");
         } else {
-            nextion.showError("Fecha inválida");
+            nextion.showError("Fecha invalida");
         }
     } else {
         nextion.showError("Error de formato");
@@ -118,6 +118,6 @@ void SystemManager::handleSetTime(const String& data) {
             nextion.showError("Falló setTime");
         }
     } else {
-        nextion.showError("Hora inválida");
+        nextion.showError("Hora invalida");
     }
 }
