@@ -1,4 +1,3 @@
-// src/main.cpp
 #include <Arduino.h>
 #include "SystemManager.h"
 
